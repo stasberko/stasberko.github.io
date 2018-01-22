@@ -32,8 +32,13 @@
   <svg id="svg" height="1024" width="1920">
     <defs>
       <pattern id="image" patternUnits="objectBoundingBox" height="64" width="64">
-        <image height="30" width="30" xlink:href="./cross.png"/>
+        <image height="24" width="24" xlink:href="./cross.png"/>
       </pattern>
+
+      <pattern id="prim_image" patternUnits="objectBoundingBox" height="64" width="64">
+        <image height="46" width="46" xlink:href="./cross.png"/>
+      </pattern>
+
     </defs>
   </svg>
 </div>
@@ -54,8 +59,7 @@
   });
 
   let nodes_data = [
-    {'info': true},
-    {'info': false},
+    {'info': 'prim_add'},
   ];
   let links_data = [];
 
@@ -106,7 +110,7 @@
       .force("charge_force", d3.forceManyBody().strength(-200))
       .force("center_force1", d3.forceX().strength(0.02).x(window.innerWidth / 2))
       .force("center_force2", d3.forceY().strength(0.02).y(window.innerHeight / 2))
-      .force("links", d3.forceLink(links_data).distance(120))
+      .force("links", d3.forceLink(links_data))
       .on("tick", tickActions);
 
   let link = svg.append("g").attr("class", "links").selectAll("line");
@@ -122,15 +126,20 @@
         .append("circle")
         .merge(node);
 
-    node.filter((d)=>{if (d.info) {return d}})
+    node.filter((d)=>{if (d.info==='node') {return d}})
         .attr('fill', '#e24b32')
         .attr("r", 23)
         .on("dblclick", releasenode);
 
-    node.filter((d)=>{if (!d.info) {return d}})
+    node.filter((d)=>{if (d.info === 'add') {return d}})
         .attr('fill', 'url(#image)')
-        .attr("r", 15)
+        .attr("r", 12)
         .on("dblclick", mcd);
+
+    node.filter((d)=>{if (d.info === 'prim_add') {return d}})
+        .attr('fill', 'url(#prim_image)')
+        .attr("r", 23)
+        .on("dblclick", prim_mcd);
 
 
     // Apply the general update pattern to the links.
@@ -138,11 +147,14 @@
       return d.source.id + "-" + d.target.id;
     });
     link.exit().remove();
-    link = link.enter().append("line").attr("stroke-width", 2).style("marker-end",d=>{if (d.target.info){return "url(#suit)"}}).merge(link);
+    link = link.enter().append("line").attr("stroke-width", 2).style("marker-end",d=>{if (d.target.info==='node'){return "url(#suit)"}}).merge(link);
 
     // Update and restart the simulation.
     simulation.nodes(nodes_data);
-    simulation.force("links").links(links_data);
+    simulation.force("links").links(links_data).iterations(8).distance(function (d) {
+      if (d.target.info==='node'){return 120}
+      else {return 21}
+    });
     simulation.alpha(1).restart();
     (d3.drag()
         .on("start", dragstart)
@@ -150,16 +162,29 @@
         .on("end", dragend))(node);
   }
 
-  function mcd(event) {
-    event.info = true;
+  function prim_mcd(event) {
     event.fixed = false;
     let point = d3.mouse(this),
-        node = {x: point[0], y: point[1], info: true},
-        add = {x: point[0], y: point[1], info: false},
+        node = {x: point[0], y: point[1], info: 'node'},
+        nodeAdd = {x: point[0], y: point[1], info: 'add'},
         n = nodes_data.push(node),
-        n_add = nodes_data.push(add);
-    links_data.push({"source": event, "target": node});
-    links_data.push({"source": event, "target": add});
+        node_a = nodes_data.push(nodeAdd);
+    links_data.push({"source": node, "target": nodeAdd});
+    restart();
+  }
+
+  function mcd(event,i) {
+    // event.info = true;
+    event.fixed = false;
+    console.log(i);
+    console.log(event);
+    let point = d3.mouse(this),
+        node = {x: point[0], y: point[1], info: 'node'},
+        nodeAdd = {x: point[0], y: point[1], info: 'add'},
+        n = nodes_data.push(node),
+        node_a = nodes_data.push(nodeAdd);
+    links_data.push({"source": event.index-1, "target": node});
+    links_data.push({"source": node, "target": nodeAdd});
     restart();
   }
 
@@ -175,7 +200,7 @@
   }
 
   function dragend(d) {
-    if( d.info){
+    if( d.info ==='node'){
       d.fixed = true;
       d.fx = d3.event.x;
       d.fy = d3.event.y;
