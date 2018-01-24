@@ -78,6 +78,7 @@
   let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
 
   let radius = 24;
+  let sm_radius = 12;
   let width = document.documentElement.clientWidth-4;
   let height = document.documentElement.clientHeight-4;
 
@@ -147,9 +148,10 @@
 
   simulation
       .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5))
-      .force("center_force1", d3.forceX().strength(0.02).x(window.innerWidth / 2))
+      .force("center_force1", d3.forceX().strength(0.02).x(width / 2))
+      .force("center_force2", d3.forceY().strength(0.02).y(height / 2))
+      .force('colision',d3.forceCollide().radius((d)=>{if (d.info==='add'){ return sm_radius} else {return radius }}))
       .force("links", d3.forceLink())
-      .force("center_force2", d3.forceY().strength(0.02).y(window.innerHeight / 2))
       .on("tick", tickActions);
 
 
@@ -214,11 +216,14 @@
 
 
     simulation.nodes(nodes_data);
-    simulation.force("links").links(links_data).id((d,r)=>{return d.index}).iterations(8).distance(function (d) {
+    simulation.force("links").links(links_data).id((d)=>{return d.index}).iterations(8).distance(function (d) {
       if (d.target.info==='node'){return 120}
       else {return 21}
     });
-    simulation.alpha(0.01).restart();
+    simulation.force("center_force1").x(width / 2);
+    simulation.force("center_force2").y(height / 2);
+
+  simulation.alpha(0.01).restart();
     (d3.drag()
         .on("start", dragstart)
         .on("drag", dragmove)
