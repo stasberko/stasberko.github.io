@@ -232,7 +232,7 @@
     (d3.zoom()
         .translateExtent([[0,0],[width,height]])
         .scaleExtent([1,3])
-        .filter(()=>{if(d3.event.type!=="mousedown" && d3.event.type!=="dblclick"  ){return true}})
+        .filter(()=>{if( d3.event.type!=="dblclick"  ){return true}})
         .on("zoom", ()=>{
           g.attr("transform", d3.event.transform)
         }))(svg);
