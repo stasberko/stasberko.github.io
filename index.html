@@ -75,10 +75,12 @@
     },
   });
 
-  let nodes_data = [
-    {'info': 'prim_add'},
-  ];
-  let links_data = [];
+
+  // localStorage.removeItem('nodes_data')
+  // localStorage.removeItem('links_data')
+  let nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
+  let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
+
   let radius = 24;
   let width = document.documentElement.clientWidth-4;
   let height = document.documentElement.clientHeight-4;
@@ -143,25 +145,41 @@
 
   let svg = d3.select("svg");
   let simulation = d3.forceSimulation();
-
-  simulation
-      .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5))
-      .force("center_force1", d3.forceX().strength(0.02).x(window.innerWidth / 2))
-      .force("center_force2", d3.forceY().strength(0.02).y(window.innerHeight / 2))
-      .force("links", d3.forceLink(links_data))
-      .on("tick", tickActions);
-
   let g = svg.append("g").attr("class", "everything").style('border', "solid black 7px");
   let link = g.append("g").attr("class", "links").selectAll("line");
   let node = g.append("g").attr("class", "nodes").selectAll("circle");
   let text = g.append('g').attr("class", "texts").selectAll('text');
 
+  simulation
+      .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5))
+      .force("center_force1", d3.forceX().strength(0.02).x(window.innerWidth / 2))
+      // .force("links", d3.forceLink(links_data))
+      .force("links", d3.forceLink())
+      .force("center_force2", d3.forceY().strength(0.02).y(window.innerHeight / 2))
+      .on("tick", tickActions);
 
+
+  function Node(index, info, text, fixed) {
+    this.index = index;
+    this.info = info;
+    this.text = text;
+    this.fixed = fixed;
+    this.x=null;
+    this.y=null;
+    this.vx=null;
+    this.vy=null;
+  }
+  function Link(index, source, target) {
+    this.index=index;
+    // this.source= new Node(source.index, source.info, source.text, source.fixed);
+    // this.target= new Node(target.index, target.info, target.text, target.fixed);
+
+    this.source= source.index;
+    this.target= target.index;
+  }
 
 
   function restart() {
-
-
     text = text.data(nodes_data, d=>{return d.index;});
     text.exit().remove();
     text = text.enter().append('text').merge(text);
@@ -172,7 +190,7 @@
         .attr('font-size', 10)
         .attr('text-anchor', "middle");
 
-    node = node.data(nodes_data, d=>{return d.index;});
+    node = node.data(nodes_data, d=>{ return d.index;});
     node.exit().remove();
     node = node.enter().append("circle").merge(node);
 
@@ -199,14 +217,13 @@
 
 
 
-    // Apply the general update pattern to the links.
-    link = link.data(links_data, function (d) {return d.source.id + "-" + d.target.id;});
+    link = link.data(links_data, function (d) { return d.source.index+'-'+d.target.index;});
     link.exit().remove();
     link = link.enter().append("line").attr("stroke-width", 2).style("marker-end",d=>{if (d.target.info==='node'){return "url(#suit)"}}).merge(link);
 
-    // Update and restart the simulation.
+
     simulation.nodes(nodes_data);
-    simulation.force("links").links(links_data).iterations(8).distance(function (d) {
+    simulation.force("links").links(links_data).id((d,r)=>{return d.index}).iterations(8).distance(function (d) {
       if (d.target.info==='node'){return 120}
       else {return 21}
     });
@@ -224,9 +241,21 @@
           g.attr("transform", d3.event.transform)
         }))(svg);
 
+    let nds = [];
+    for (let elem of nodes_data){
+      nds.push(new Node(elem.index,elem.info,elem.text,elem.fixed))
+    }
+    let lds = [];
+    for (let lnk of links_data){
+      lds.push(new Link(lnk.index,lnk.source,lnk.target))
+    }
+    localStorage.setItem('nodes_data', JSON.stringify(nds));
+    localStorage.setItem('links_data', JSON.stringify(lds));
+
   }
 
   function prim_mcd(snode) {
+
     let res = prompt();
     if (res) {
       snode.fixed = false;
@@ -235,10 +264,12 @@
           nodeAdd = {x: point[0], y: point[1], info: 'add'},
           n = nodes_data.push(node),
           node_a = nodes_data.push(nodeAdd);
-      links_data.push({"source": node, "target": nodeAdd});
+
+      let r = links_data.push({"source": n-1, "target": node_a-1});
     }
     event.stopPropagation();
     restart();
+    console.log(links_data);
 
   }
 
@@ -251,8 +282,8 @@
           nodeAdd = {x: point[0], y: point[1], info: 'add'},
           n = nodes_data.push(node),
           node_a = nodes_data.push(nodeAdd);
-      links_data.push({"source": snode.index - 1, "target": node});
-      links_data.push({"source": node, "target": nodeAdd});
+      links_data.push({"source": snode.index - 1, "target": n-1});
+      links_data.push({"source": n-1, "target": node_a-1});
     }
     event.stopPropagation();
     restart();
