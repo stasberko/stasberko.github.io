@@ -15,10 +15,6 @@
     }
 
     #svg {
-      /*height: 100vh;*/
-      /*width: 100vw;*/
-      /*height: 1000px;*/
-      /*width: 1000px;*/
       display: block;
     }
 
@@ -76,8 +72,8 @@
   });
 
 
-  // localStorage.removeItem('nodes_data')
-  // localStorage.removeItem('links_data')
+  // localStorage.removeItem('nodes_data');
+  // localStorage.removeItem('links_data');
   let nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
   let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
 
@@ -105,7 +101,6 @@
   window.addEventListener("optimizedResize", function (e) {
     width = e.target.document.documentElement.clientWidth-4;
     height = e.target.document.documentElement.clientHeight-4;
-
   });
 
   function tickActions() {
@@ -153,27 +148,23 @@
   simulation
       .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5))
       .force("center_force1", d3.forceX().strength(0.02).x(window.innerWidth / 2))
-      // .force("links", d3.forceLink(links_data))
       .force("links", d3.forceLink())
       .force("center_force2", d3.forceY().strength(0.02).y(window.innerHeight / 2))
       .on("tick", tickActions);
 
 
-  function Node(index, info, text, fixed) {
+  function Node(index, info, text, fixed, x,y) {
     this.index = index;
     this.info = info;
     this.text = text;
     this.fixed = fixed;
-    this.x=null;
-    this.y=null;
+    this.fx=x;
+    this.fy=y;
     this.vx=null;
     this.vy=null;
   }
   function Link(index, source, target) {
     this.index=index;
-    // this.source= new Node(source.index, source.info, source.text, source.fixed);
-    // this.target= new Node(target.index, target.info, target.text, target.fixed);
-
     this.source= source.index;
     this.target= target.index;
   }
@@ -243,7 +234,7 @@
 
     let nds = [];
     for (let elem of nodes_data){
-      nds.push(new Node(elem.index,elem.info,elem.text,elem.fixed))
+      nds.push(new Node(elem.index,elem.info,elem.text,elem.fixed,elem.fx,elem.fy))
     }
     let lds = [];
     for (let lnk of links_data){
@@ -265,7 +256,7 @@
           n = nodes_data.push(node),
           node_a = nodes_data.push(nodeAdd);
 
-      let r = links_data.push({"source": n-1, "target": node_a-1});
+      links_data.push({"source": n-1, "target": node_a-1});
     }
     event.stopPropagation();
     restart();
@@ -321,7 +312,7 @@
     event.stopPropagation();
   }
 
-  let int = setInterval(restart, 100);
+  setInterval(restart, 100);
 
 
 
