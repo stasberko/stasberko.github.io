@@ -127,7 +127,30 @@
       margin-right: 0;
     }
   </style>
+  <style>
+    .text {
+      font-size: 14px;
+    }
+
+    .item {
+      margin-bottom: 18px;
+    }
+
+    .clearfix:before,
+    .clearfix:after {
+      display: table;
+      content: "";
+    }
+    .clearfix:after {
+      clear: both
+    }
+
+    .box-card {
+      width: 480px;
+    }
+  </style>
   <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
+  <script src="https://unpkg.com/element-ui/lib/index.js"></script>
 </head>
 <body>
 
@@ -148,11 +171,23 @@
       <li>
         <a href="#">{{fixed}}</a>
       </li>
+      <li>
+        <el-card class="box-card">
+          <div slot="header" class="clearfix">
+            <span>Card name</span>
+            <el-button style="float: right; padding: 3px 0" type="text">Operation button</el-button>
+          </div>
+          <div v-for="o in 4" :key="o" class="text item">
+            {{'List item ' + o }}
+          </div>
+        </el-card>
+      </li>
     </ul>
+
   </div>
 
   <div id="page-content-wrapper">
-    <svg id="svg" style="border: #999999 solid 2px; background: #81D4FA ">
+    <svg id="svg" style=" background: #81D4FA ">
     <defs>
       <pattern id="image" patternUnits="objectBoundingBox" height="64" width="64">
         <image height="24" width="24" xlink:href="./cross.png"/>
@@ -182,7 +217,6 @@
     },
   });
 
-
   // localStorage.removeItem('nodes_data');
   // localStorage.removeItem('links_data');
   let nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
@@ -192,6 +226,21 @@
   let sm_radius = 12;
   let width = document.documentElement.clientWidth;
   let height = document.documentElement.clientHeight;
+  let svg = d3.select("svg").on("click", close_sb).on('contextmenu',prevent_context_menu);
+  let simulation = d3.forceSimulation();
+  let g = svg.append("g").attr("class", "everything");
+  let link = g.append("g").attr("class", "links").selectAll("line");
+  let node = g.append("g").attr("class", "nodes").selectAll("circle");
+  let text = g.append('g').attr("class", "texts").selectAll('text');
+
+  simulation
+      .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5).distanceMax(100))
+      .force("center_force1", d3.forceX().strength(0.02).x(width / 2))
+      .force("center_force2", d3.forceY().strength(0.02).y(height / 2))
+      .force('colision',d3.forceCollide().radius((d)=>{if (d.info ==='add'){ return sm_radius} else {return radius }}))
+      .force("links", d3.forceLink())
+      .on("tick", tickActions);
+
 
   (function() {
     let throttle = function(type, name, obj) {
@@ -246,40 +295,8 @@
         .attr("x", function (d) {return d.x;})
         .attr("y", function (d) {return d.y;});
 
-      svg.style('height',height);
-      svg.style('width',width- document.getElementById('sidebar-wrapper').clientWidth);
-  }
-
-  let svg = d3.select("svg");
-  let simulation = d3.forceSimulation();
-  let g = svg.append("g").attr("class", "everything").style('border', "solid black 7px");
-  let link = g.append("g").attr("class", "links").selectAll("line");
-  let node = g.append("g").attr("class", "nodes").selectAll("circle");
-  let text = g.append('g').attr("class", "texts").selectAll('text');
-
-  simulation
-      .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5).distanceMax(100))
-      .force("center_force1", d3.forceX().strength(0.02).x(width / 2))
-      .force("center_force2", d3.forceY().strength(0.02).y(height / 2))
-      .force('colision',d3.forceCollide().radius((d)=>{if (d.info ==='add'){ return sm_radius} else {return radius }}))
-      .force("links", d3.forceLink())
-      .on("tick", tickActions);
-
-
-  function Node(index, info, text, fixed, x,y) {
-    this.index = index;
-    this.info = info;
-    this.text = text;
-    this.fixed = fixed;
-    this.fx=x;
-    this.fy=y;
-    this.vx=null;
-    this.vy=null;
-  }
-  function Link(index, source, target) {
-    this.index=index;
-    this.source= source.index;
-    this.target= target.index;
+    svg.style('height',height);
+    svg.style('width',width- document.getElementById('sidebar-wrapper').clientWidth);
   }
 
   function restart() {
@@ -291,18 +308,20 @@
         .text(node => {if (node.info==='node'){return node.text.slice(0,9)}})
         .attr('font-family', "sans-serif")
         .attr('font-size', 8)
-        .attr('text-anchor', "middle");
+        .attr('text-anchor', "middle")
+        .on('contextmenu',context_menu_toggle);
 
     node = node.data(nodes_data, d=>{ return d.index;});
     node.exit().remove();
-    node = node.enter().append("circle").on('contextmenu',context_menu_toggle).merge(node);
+    node = node.enter().append("circle").merge(node);
 
     node.filter((d)=>{if (d.info==='node') {return d}})
         .attr('fill', '#64FFDA')
         .attr("r", radius)
-        .attr('stroke-width',(d)=>{if(d.fixed){return 4} else return 0})
+        .attr('stroke-width',(d)=>{if(d.fixed){return 3} else return 0})
         .attr('stroke','#7B1FA2')
         .attr('stroke-opacity',"0.3")
+        .on('contextmenu',context_menu_toggle)
         .on("dblclick", releasenode);
 
     node.filter((d)=>{if (d.info === 'add') {return d}})
@@ -433,7 +452,35 @@
     app.fixed = 'Fixed ' + d.fixed||false;
     event.stopImmediatePropagation();
     event.preventDefault();
-    document.getElementById("wrapper").classList.toggle('toggled');
+    document.getElementById("wrapper").classList.add('toggled');
+  }
+
+  function prevent_context_menu() {
+    event.stopImmediatePropagation();
+    event.preventDefault();
+  }
+
+  function close_sb() {
+    document.getElementById("wrapper").classList.remove('toggled');
+    event.stopImmediatePropagation();
+    event.preventDefault();
+  }
+
+  function Node(index, info, text, fixed, x,y) {
+    this.index = index;
+    this.info = info;
+    this.text = text;
+    this.fixed = fixed;
+    this.fx=x;
+    this.fy=y;
+    this.vx=null;
+    this.vy=null;
+  }
+
+  function Link(index, source, target) {
+    this.index=index;
+    this.source= source.index;
+    this.target= target.index;
   }
 
   setInterval(restart, 100);
