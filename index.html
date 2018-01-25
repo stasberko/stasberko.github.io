@@ -304,7 +304,7 @@
         .attr('stroke-width',(d)=>{if(d.fixed){return 3} else return 0})
         .attr('stroke','#7B1FA2')
         .attr('stroke-opacity',"0.3")
-        .on('mousedown',context_menu_toggle)
+        .on('click',context_menu_toggle)
         .on("contextmenu", releasenode);
 
     nodes_inst.filter((d)=>{if (d.info === 'add') {return d}})
@@ -401,6 +401,8 @@
     if (!d3.event.active) simulation.alphaTarget(0).restart();
     d.fx = d.x;
     d.fy = d.y;
+    app.sel_index = d.index;
+
   }
 
   function dragmove(d) {
@@ -444,8 +446,8 @@
 
   function close_sb() {
     document.getElementById("wrapper").classList.remove('toggled');
-    event.stopImmediatePropagation();
-    event.preventDefault();
+    // event.stopImmediatePropagation();
+    // event.preventDefault();
   }
 
   function Node(index, info, text, fixed, x,y) {
