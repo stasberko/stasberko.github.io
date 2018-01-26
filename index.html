@@ -80,7 +80,7 @@
     }
     #sidebar-wrapper {
       overflow:  hidden;
-
+      border: solid #BBBBBB 2px;
       z-index: 1000;
       position: fixed;
       left: 250px;
@@ -88,7 +88,7 @@
       height: 100%;
       margin-left: -250px;
       overflow-y: auto;
-      background: #000;
+      background: #999;
       -webkit-transition: all 0.5s ease;
       -moz-transition: all 0.5s ease;
       -o-transition: all 0.5s ease;
@@ -96,6 +96,7 @@
     }
 
     #wrapper.toggled #sidebar-wrapper {
+
       width: 250px;
     }
 
@@ -110,6 +111,8 @@
   </style>
   <style>
     * {
+      box-sizing:content-box;
+
       margin: 0;
       padding: 0;
     }
@@ -191,8 +194,8 @@
     },
   });
 
-  // localStorage.removeItem('nodes_data');
-  // localStorage.removeItem('links_data');
+  localStorage.removeItem('nodes_data');
+  localStorage.removeItem('links_data');
   app.nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
   let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
 
@@ -200,7 +203,7 @@
   let sm_radius = 12;
   let width = document.documentElement.clientWidth;
   let height = document.documentElement.clientHeight;
-  let svg = d3.select("svg").on("mousedown", close_sb).on('contextmenu',prevent_context_menu);
+  let svg = d3.select("svg").on("click", close_sb).on('contextmenu',prevent_context_menu);
   let simulation = d3.forceSimulation();
   let g = svg.append("g").attr("class", "everything");
   let link = g.append("g").attr("class", "links").selectAll("line");
@@ -290,7 +293,8 @@
           .attr('font-family', "sans-serif")
           .attr('font-size', 8)
           .attr('text-anchor', "middle")
-          .on('click', context_menu_toggle);
+          .on('click', context_menu_toggle)
+          .on("contextmenu", releasenode);
     }
 
 
@@ -368,30 +372,35 @@
     if (res) {
       snode.fixed = false;
       let point = d3.mouse(this),
-          node = {x: point[0], y: point[1], info: 'node', text: res},
+          node = {x: point[0], y: point[1], info: 'node', text: res,child:{},child_link:{}},
           nodeAdd = {x: point[0], y: point[1], info: 'add'},
-          n = app.nodes_data.push(node),
-          node_a = app.nodes_data.push(nodeAdd);
-
-      links_data.push({"source": n-1, "target": node_a-1});
+          n = app.nodes_data.push(node)-1,
+          node_a = app.nodes_data.push(nodeAdd)-1,
+          child_add_link = links_data.push({"source": n, "target": node_a});
+      app.nodes_data[n].child[node_a]= node_a;
+      app.nodes_data[n].child_link[child_add_link]=child_add_link;
     }
     event.stopPropagation();
     restart();
-    console.log(links_data);
 
   }
 
   function mcd(snode) {
-    snode.fixed = false;
     let res = prompt();
     if (res) {
       let point = d3.mouse(this),
-          node = {x: point[0], y: point[1], info: 'node', text: res},
+          node = {x: point[0], y: point[1], info: 'node', text: res, child:{},child_link:{}, parent: snode.index - 1 },
           nodeAdd = {x: point[0], y: point[1], info: 'add'},
-          n = app.nodes_data.push(node),
-          node_a = app.nodes_data.push(nodeAdd);
-      links_data.push({"source": snode.index - 1, "target": n-1});
-      links_data.push({"source": n-1, "target": node_a-1});
+          n = app.nodes_data.push(node)-1,
+          node_a = app.nodes_data.push(nodeAdd)-1,
+          child_link = links_data.push({"source": snode.index - 1, "target": n}),
+          child_add_link = links_data.push({"source": n, "target": node_a});
+
+      app.nodes_data[snode.index - 1].child[n]= n;
+      app.nodes_data[snode.index - 1].child_link[child_link]= child_link;
+      app.nodes_data[n].child[node_a]= node_a;
+      app.nodes_data[n].child_link[child_add_link]=child_add_link;
+      console.log(app.nodes_data);
     }
     event.stopPropagation();
     restart();
@@ -423,9 +432,13 @@
     if (!d3.event.active) simulation.alphaTarget(0);
   }
 
-  function releasenode(d) {
+  function releasenode(d,i) {
     event.stopImmediatePropagation();
     event.preventDefault();
+
+    console.log(d);
+    del_node(app.nodes_data[d.index],d.index);
+
 
     if (!d3.event.active) simulation.alphaTarget(0);
     d.fixed = false;
@@ -434,7 +447,10 @@
   }
 
   function context_menu_toggle(d) {
-    app.sel_index = d.index;
+    console.log("ELEM ", d);
+    event.stopImmediatePropagation();
+    event.preventDefault();
+
     document.getElementById("wrapper").classList.add('toggled');
   }
 
@@ -446,17 +462,16 @@
 
   function close_sb() {
     document.getElementById("wrapper").classList.remove('toggled');
-    // event.stopImmediatePropagation();
-    // event.preventDefault();
   }
 
-  function Node(index, info, text, fixed, x,y) {
+  function Node(index, info, text, fixed, x,y, child) {
     this.index = index;
     this.info = info;
     this.text = text;
     this.fixed = fixed;
     this.fx=x;
     this.fy=y;
+    this.child=child;
     this.vx=null;
     this.vy=null;
   }
@@ -467,6 +482,32 @@
     this.target= target.index;
   }
 
+  function del_node(d, i) {
+    if (d.child.length>1){console.log("DEl child first")}
+    else {
+      app.sel_index = d.index;
+      console.log("Parent chaild elem ",app.nodes_data[app.sel_node.parent].child[d.index]);
+      delete app.nodes_data[app.sel_node.parent].child[d.index];
+
+      app.nodes_data.splice(d.index, 2);
+      links_data.splice(d.child_link[d.index]-2, 2);
+      console.log(d.child_link[d.index]-1);
+      console.log(      d.child_link[d.index]-2);
+      console.log("After Links Data", links_data);
+      console.log("Elem chLink", d.child_link);
+      // link = link.filter(function(l) {
+      //   if (!(l.source.index !== d.index && l.target.index !== d.index))
+      //     console.log(l.source.index, l.target.index,d.index);
+      //   return l.source.index !== d.index && l.target !== d.index;
+      // });
+
+      restart();
+
+      console.log("Elem chLink",links_data);
+
+    }
+    
+  }
   setInterval(restart, 100);
 
 </script>
