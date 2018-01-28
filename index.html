@@ -180,6 +180,14 @@
 
   let app = new Vue({
     el: '#sidebar-wrapper',
+    computed:{
+      links_data:function () {
+        return this.nodes_data.map(node=>{
+          if (node.links_data)
+          return node.links_data}).filter(node=>node)
+      }
+
+    },
     data: function () {
       return {
         sel_index: null,
@@ -197,7 +205,7 @@
   localStorage.removeItem('nodes_data');
   localStorage.removeItem('links_data');
   app.nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
-  let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
+  // let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
 
   let radius = 24;
   let sm_radius = 12;
@@ -324,15 +332,12 @@
         .on("dblclick", prim_mcd);
 
 
-
-
-    link = link.data(links_data, function (d) { return d.source.index+'-'+d.target.index;});
+    link = link.data(app.links_data, function (d) { return d.source+'-'+d.target;});
     link.exit().remove();
     link = link.enter().append("line").attr("stroke-width", 2).style("marker-end",d=>{if (d.target.info==='node'){return "url(#suit)"}}).merge(link);
-
-
     simulation.nodes(app.nodes_data);
-    simulation.force("links").links(links_data).id((d)=>{return d.index}).iterations(8).distance(function (d) {
+
+    simulation.force("links").links(app.links_data).id((d)=>{return d.index}).iterations(8).distance(function (d) {
       if (d.target.info==='node'){return 120}
       else {return 21}
     });
@@ -353,16 +358,16 @@
           g.attr("transform", d3.event.transform)
         }))(svg);
 
-    let nds = [];
-    for (let elem of app.nodes_data){
-      nds.push(new Node(elem.index,elem.info,elem.text,elem.fixed,elem.fx,elem.fy))
-    }
-    let lds = [];
-    for (let lnk of links_data){
-      lds.push(new Link(lnk.index,lnk.source,lnk.target))
-    }
-    localStorage.setItem('nodes_data', JSON.stringify(nds));
-    localStorage.setItem('links_data', JSON.stringify(lds));
+    // let nds = [];
+    // for (let elem of app.nodes_data){
+    //   nds.push(new Node(elem.index,elem.info,elem.text,elem.fixed,elem.fx,elem.fy))
+    // }
+    // let lds = [];
+    // for (let lnk of links_data){
+    //   lds.push(new Link(lnk.index,lnk.source,lnk.target))
+    // }
+    // localStorage.setItem('nodes_data', JSON.stringify(nds));
+    // localStorage.setItem('links_data', JSON.stringify(lds));
 
   }
 
@@ -372,13 +377,14 @@
     if (res) {
       snode.fixed = false;
       let point = d3.mouse(this),
-          node = {x: point[0], y: point[1], info: 'node', text: res,child:{},child_link:{}},
-          nodeAdd = {x: point[0], y: point[1], info: 'add'},
-          n = app.nodes_data.push(node)-1,
-          node_a = app.nodes_data.push(nodeAdd)-1,
-          child_add_link = links_data.push({"source": n, "target": node_a});
-      app.nodes_data[n].child[node_a]= node_a;
-      app.nodes_data[n].child_link[child_add_link]=child_add_link;
+
+          node_inst = {x: point[0], y: point[1], info: 'node', text: res,child:[], parent: snode.index - 1 },
+          nodeAdd_inst = {x: point[0], y: point[1], info: 'add'},
+
+          node = app.nodes_data.push( node_inst)-1,
+          node_add = app.nodes_data.push(nodeAdd_inst)-1,
+          child_add_link = app.nodes_data[node_add].links_data = {"source": node, "target": node_add};
+
     }
     event.stopPropagation();
     restart();
@@ -389,18 +395,17 @@
     let res = prompt();
     if (res) {
       let point = d3.mouse(this),
-          node = {x: point[0], y: point[1], info: 'node', text: res, child:{},child_link:{}, parent: snode.index - 1 },
-          nodeAdd = {x: point[0], y: point[1], info: 'add'},
-          n = app.nodes_data.push(node)-1,
-          node_a = app.nodes_data.push(nodeAdd)-1,
-          child_link = links_data.push({"source": snode.index - 1, "target": n}),
-          child_add_link = links_data.push({"source": n, "target": node_a});
+          node_inst = {x: point[0], y: point[1], info: 'node', text: res,child:[], parent: snode.index - 1 },
+          nodeAdd_inst = {x: point[0], y: point[1], info: 'add'},
 
-      app.nodes_data[snode.index - 1].child[n]= n;
-      app.nodes_data[snode.index - 1].child_link[child_link]= child_link;
-      app.nodes_data[n].child[node_a]= node_a;
-      app.nodes_data[n].child_link[child_add_link]=child_add_link;
-      console.log(app.nodes_data);
+          node = app.nodes_data.push( node_inst)-1,
+          node_add = app.nodes_data.push(nodeAdd_inst)-1,
+
+          child_add_link = app.nodes_data[node_add].links_data = {"source": node, "target": node_add},
+          child_link = app.nodes_data[node].links_data = {"source": snode.index - 1, "target": node};
+
+
+      app.nodes_data[snode.index - 1].child.push(node_inst);
     }
     event.stopPropagation();
     restart();
@@ -435,8 +440,6 @@
   function releasenode(d,i) {
     event.stopImmediatePropagation();
     event.preventDefault();
-
-    console.log(d);
     del_node(app.nodes_data[d.index],d.index);
 
 
@@ -483,33 +486,20 @@
   }
 
   function del_node(d, i) {
-    if (d.child.length>1){console.log("DEl child first")}
+    console.log(d);
+    if (d.child.length>0){console.log("DEl child first")}
     else {
-      app.sel_index = d.index;
-      console.log("Parent chaild elem ",app.nodes_data[app.sel_node.parent].child[d.index]);
-      delete app.nodes_data[app.sel_node.parent].child[d.index];
-
+      let par_index = app.nodes_data[d.parent].child.findIndex(elem=>{return elem.index === d.index});
+      app.nodes_data[d.parent].child.splice(par_index,1);
       app.nodes_data.splice(d.index, 2);
-      links_data.splice(d.child_link[d.index]-2, 2);
-      console.log(d.child_link[d.index]-1);
-      console.log(      d.child_link[d.index]-2);
-      console.log("After Links Data", links_data);
-      console.log("Elem chLink", d.child_link);
-      // link = link.filter(function(l) {
-      //   if (!(l.source.index !== d.index && l.target.index !== d.index))
-      //     console.log(l.source.index, l.target.index,d.index);
-      //   return l.source.index !== d.index && l.target !== d.index;
-      // });
-
       restart();
-
-      console.log("Elem chLink",links_data);
-
     }
-    
   }
+
+
   setInterval(restart, 100);
 
 </script>
+
 </body>
 </html>
