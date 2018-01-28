@@ -6,7 +6,8 @@
         content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <meta http-equiv="X-UA-Compatible" content="ie=edge">
   <script src="vue.js"></script>
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css"
+        integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
 
   <script
           src="https://code.jquery.com/jquery-3.3.1.min.js"
@@ -22,16 +23,15 @@
     /* Sidebar Styles */
 
     .sidebar-nav {
-      position: absolute;
-      top: 0;
-      width: 250px;
+      /*position: absolute;*/
+      /*top: 0;*/
+      width: 240px;
       margin: 0;
       padding: 0;
       list-style: none;
     }
 
     .sidebar-nav li {
-      text-indent: 20px;
       line-height: 40px;
     }
 
@@ -51,17 +51,17 @@
       text-decoration: none;
     }
 
-    .sidebar-nav>.sidebar-brand {
+    .sidebar-nav > .sidebar-brand {
       height: 65px;
       font-size: 18px;
       line-height: 60px;
     }
 
-    .sidebar-nav>.sidebar-brand a {
+    .sidebar-nav > .sidebar-brand a {
       color: #999999;
     }
 
-    .sidebar-nav>.sidebar-brand a:hover {
+    .sidebar-nav > .sidebar-brand a:hover {
       color: #fff;
       background: none;
     }
@@ -74,12 +74,14 @@
       -o-transition: all 0.5s ease;
       transition: all 0.5s ease;
     }
+
     #page-content-wrapper {
       width: 100%;
       position: relative;
     }
+
     #sidebar-wrapper {
-      overflow:  hidden;
+      overflow: hidden;
       border: solid #BBBBBB 2px;
       z-index: 1000;
       position: fixed;
@@ -111,13 +113,10 @@
   </style>
   <style>
     * {
-      box-sizing:content-box;
+      box-sizing: content-box;
 
       margin: 0;
       padding: 0;
-    }
-    .sidebar-nav {
-      width: 200px;
     }
 
     #svg {
@@ -135,80 +134,138 @@
     }
 
   </style>
+  <style>
+    .text {
+      font-size: 14px;
+    }
+
+    .item {
+      margin-bottom: 18px;
+    }
+
+    .clearfix:before,
+    .clearfix:after {
+      display: table;
+      content: "";
+    }
+    .clearfix:after {
+      clear: both
+    }
+
+    .box-card {
+      width: 480px;
+    }
+  </style>
 
   <link rel="stylesheet" href="https://unpkg.com/element-ui/lib/theme-chalk/index.css">
   <script src="https://unpkg.com/element-ui/lib/index.js"></script>
 </head>
 <body>
 
-<div  id="wrapper">
+<div id="wrapper">
   <div id="sidebar-wrapper">
     <ul class="sidebar-nav">
-      <li class="sidebar-brand">
+      <li class="sidebar-brand" v-if="show_prim" @click="show_prim=!show_prim" >
         {{sel_node.text}}
       </li>
+      <li v-else >
+        <el-input placeholder="Please input" autofocus @blur="show_prim=!show_prim" style="display: block" v-model="sel_node.text"></el-input>
+      </li>
+
       <li>
-        <a href="#"></a>
+
+        <el-card style="width: 240px" class="box-card">
+          <div v-for="o in 4" :key="o" class="text item">
+            {{'List item ' + o }}
+          </div>
+        </el-card>
       </li>
       <li>
-        <el-input   placeholder="Please input" v-model="sel_node.text"></el-input>
-      </li>
-      <li>
+        <el-button type="danger"  @click="del_node(sel_node)">Delete</el-button>
       </li>
     </ul>
   </div>
 
   <div id="page-content-wrapper">
     <svg id="svg" style=" background: #81D4FA ">
-    <defs>
-      <pattern id="image" patternUnits="objectBoundingBox" height="64" width="64">
-        <image height="24" width="24" xlink:href="./cross.png"/>
-      </pattern>
+      <defs>
+        <pattern id="image" patternUnits="objectBoundingBox" height="64" width="64">
+          <image height="24" width="24" xlink:href="./cross.png"/>
+        </pattern>
 
-      <pattern id="prim_image" patternUnits="objectBoundingBox" height="64" width="64">
-        <image height="46" width="46" xlink:href="./cross.png"/>
-      </pattern>
+        <pattern id="prim_image" patternUnits="objectBoundingBox" height="64" width="64">
+          <image height="46" width="46" xlink:href="./cross.png"/>
+        </pattern>
 
-    </defs>
-    <defs><marker id="suit" viewBox="0 -5 10 10" refX="29" refY="0" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,-5L10,0L0,5 L10,0 L0, -5" style="stroke: rgb(153, 153, 153); opacity: 0.8;"></path></marker><marker id="licensing" viewBox="0 -5 10 10" refX="29" refY="0" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,-5L10,0L0,5 L10,0 L0, -5" style="stroke: rgb(153, 153, 153); opacity: 0.8;"></path></marker><marker id="resolved" viewBox="0 -5 10 10" refX="29" refY="0" markerWidth="6" markerHeight="6" orient="auto"><path d="M0,-5L10,0L0,5 L10,0 L0, -5" style="stroke: rgb(153, 153, 153); opacity: 0.8;"></path></marker></defs>
-  </svg>
+      </defs>
+      <defs>
+        <marker id="suit" viewBox="0 -5 10 10" refX="29" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,-5L10,0L0,5 L10,0 L0, -5" style="stroke: rgb(153, 153, 153); opacity: 0.8;"></path>
+        </marker>
+        <marker id="licensing" viewBox="0 -5 10 10" refX="29" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,-5L10,0L0,5 L10,0 L0, -5" style="stroke: rgb(153, 153, 153); opacity: 0.8;"></path>
+        </marker>
+        <marker id="resolved" viewBox="0 -5 10 10" refX="29" refY="0" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,-5L10,0L0,5 L10,0 L0, -5" style="stroke: rgb(153, 153, 153); opacity: 0.8;"></path>
+        </marker>
+      </defs>
+    </svg>
   </div>
 
-  </div>
+</div>
 
 <script>
 
   let app = new Vue({
     el: '#sidebar-wrapper',
-    computed:{
-      links_data:function () {
-        return this.nodes_data.map(node=>{
+    computed: {
+      links_data: function () {
+        return this.nodes_data.map(node => {
           if (node.links_data)
-          return node.links_data}).filter(node=>node)
+            return node.links_data
+        }).filter(node => node)
       }
 
     },
     data: function () {
       return {
         sel_index: null,
-        sel_node: {'text':'', 'ref':''},
+        sel_node: {'text': '', 'ref': ''},
         nodes_data: [],
+        show_prim:true,
       }
     },
-    watch:{
+    watch: {
       sel_index: function () {
         this.sel_node = this.nodes_data[this.sel_index]
       },
     },
+    methods: {
+      del_node: function (d) {
+        if (d.child.length > 0) {
+          console.log("DEl child first")
+        }
+        else {
+          let par_index = app.nodes_data[d.parent].child.findIndex(elem => {
+            return elem === d.index
+          });
+          app.nodes_data[d.parent].child.splice(par_index, 1);
+          app.nodes_data.splice(d.index, 2);
+          restart();
+        }
+      }
+
+
+    }
   });
 
   // localStorage.removeItem('nodes_data');
-  app.nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
+  app.nodes_data = JSON.parse(localStorage.getItem('nodes_data')) || [{'info': 'prim_add'}];
   let radius = 24;
   let sm_radius = 12;
   let width = document.documentElement.clientWidth;
   let height = document.documentElement.clientHeight;
-  let svg = d3.select("svg").on("click", close_sb).on('contextmenu',prevent_context_menu);
+  let svg = d3.select("svg").on("click", close_sb).on('contextmenu', prevent_context_menu);
   let simulation = d3.forceSimulation();
   let g = svg.append("g").attr("class", "everything");
   let link = g.append("g").attr("class", "links").selectAll("line");
@@ -219,19 +276,27 @@
       .force("charge_force", d3.forceManyBody().strength(-80).theta(0.5).distanceMax(100))
       .force("center_force1", d3.forceX().strength(0.02).x(width / 2))
       .force("center_force2", d3.forceY().strength(0.02).y(height / 2))
-      .force('colision',d3.forceCollide().radius((d)=>{if (d.info ==='add'){ return sm_radius} else {return radius }}))
+      .force('colision', d3.forceCollide().radius((d) => {
+        if (d.info === 'add') {
+          return sm_radius
+        } else {
+          return radius
+        }
+      }))
       .force("links", d3.forceLink())
       .on("tick", tickActions);
 
 
-  (function() {
-    let throttle = function(type, name, obj) {
+  (function () {
+    let throttle = function (type, name, obj) {
       obj = obj || window;
       let running = false;
-      let func = function() {
-        if (running) { return; }
+      let func = function () {
+        if (running) {
+          return;
+        }
         running = true;
-        requestAnimationFrame(function() {
+        requestAnimationFrame(function () {
           obj.dispatchEvent(new CustomEvent(name));
           running = false;
         });
@@ -247,11 +312,23 @@
   });
 
   function tickActions() {
-    nodes_inst.filter((d)=>{if(d.info!=='add'){return d}})
-        .attr("cx", function (d) { return d.x = Math.max(radius, Math.min(width - radius - document.getElementById('sidebar-wrapper').clientWidth, d.x))})
-        .attr("cy", function (d) { return d.y = Math.max(radius, Math.min(height - radius , d.y));});
+    nodes_inst.filter((d) => {
+      if (d.info !== 'add') {
+        return d
+      }
+    })
+        .attr("cx", function (d) {
+          return d.x = Math.max(radius, Math.min(width - radius - document.getElementById('sidebar-wrapper').clientWidth, d.x))
+        })
+        .attr("cy", function (d) {
+          return d.y = Math.max(radius, Math.min(height - radius, d.y));
+        });
 
-    nodes_inst.filter((d)=>{if(d.info==='add'){return d}})
+    nodes_inst.filter((d) => {
+      if (d.info === 'add') {
+        return d
+      }
+    })
         .attr("cx", function (d) {
           return d.x;
         })
@@ -274,11 +351,15 @@
         });
 
     text
-        .attr("x", function (d) {return d.x;})
-        .attr("y", function (d) {return d.y;});
+        .attr("x", function (d) {
+          return d.x;
+        })
+        .attr("y", function (d) {
+          return d.y;
+        });
 
-    svg.style('height',height);
-    svg.style('width',width- document.getElementById('sidebar-wrapper').clientWidth);
+    svg.style('height', height);
+    svg.style('width', width - document.getElementById('sidebar-wrapper').clientWidth);
   }
 
   function restart() {
@@ -303,61 +384,95 @@
     }
 
 
-    nodes_inst = nodes_inst.data(app.nodes_data, d=>{ return d.index;});
+    nodes_inst = nodes_inst.data(app.nodes_data, d => {
+      return d.index;
+    });
     nodes_inst.exit().remove();
-    nodes_inst =nodes_inst.enter().append("circle").merge(nodes_inst);
+    nodes_inst = nodes_inst.enter().append("circle").merge(nodes_inst);
 
-    nodes_inst.filter((d)=>{if (d.info==='node') {return d}})
+    nodes_inst.filter((d) => {
+      if (d.info === 'node') {
+        return d
+      }
+    })
         .attr('fill', '#64FFDA')
         .attr("r", radius)
-        .attr('stroke-width',(d)=>{if(d.fixed){return 3} else return 0})
-        .attr('stroke','#7B1FA2')
-        .attr('stroke-opacity',"0.3")
-        .on('click',context_menu_toggle)
+        .attr('stroke-width', (d) => {
+          if (d.fixed) {
+            return 3
+          } else return 0
+        })
+        .attr('stroke', '#7B1FA2')
+        .attr('stroke-opacity', "0.3")
+        .on('click', context_menu_toggle)
         .on("contextmenu", releasenode);
 
-    nodes_inst.filter((d)=>{if (d.info === 'add') {return d}})
+    nodes_inst.filter((d) => {
+      if (d.info === 'add') {
+        return d
+      }
+    })
         .attr('fill', 'url(#image)')
         .attr("r", 12)
-        .attr('stroke-width','0')
-        .attr('stroke','white')
+        .attr('stroke-width', '0')
+        .attr('stroke', 'white')
         .on("dblclick", mcd);
 
-    nodes_inst.filter((d)=>{if (d.info === 'prim_add') {return d}})
+    nodes_inst.filter((d) => {
+      if (d.info === 'prim_add') {
+        return d
+      }
+    })
         .attr('fill', 'url(#prim_image)')
         .attr("r", radius)
         .on("dblclick", prim_mcd);
 
 
-    link = link.data(app.links_data, function (d) {return d.source+'-'+d.target;});
+    link = link.data(app.links_data, function (d) {
+      return d.source + '-' + d.target;
+    });
     link.exit().remove();
-    link = link.enter().append("line").attr("stroke-width", 2).style("marker-end",d=>{if (d.target.info==='node'){return "url(#suit)"}}).merge(link);
+    link = link.enter().append("line").attr("stroke-width", 2).style("marker-end", d => {
+      if (d.target.info === 'node') {
+        return "url(#suit)"
+      }
+    }).merge(link);
     simulation.nodes(app.nodes_data);
 
-    simulation.force("links").links(app.links_data).id((d)=>{return d.index}).iterations(8).distance(function (d) {
-      if (d.target.info==='node'){return 120}
-      else {return 21}
+    simulation.force("links").links(app.links_data).id((d) => {
+      return d.index
+    }).iterations(8).distance(function (d) {
+      if (d.target.info === 'node') {
+        return 120
+      }
+      else {
+        return 21
+      }
     });
     simulation.force("center_force1").x(width / 2);
     simulation.force("center_force2").y(height / 2);
 
-  simulation.alpha(0.01).restart();
+    simulation.alpha(0.01).restart();
     (d3.drag()
         .on("start", dragstart)
         .on("drag", dragmove)
         .on("end", dragend))(nodes_inst);
 
     (d3.zoom()
-        .translateExtent([[0,0],[width- document.getElementById('sidebar-wrapper').clientWidth,height]])
-        .scaleExtent([1,3])
-        .filter(()=>{if( d3.event.type!=="dblclick"  ){return true}})
-        .on("zoom", ()=>{
+        .translateExtent([[0, 0], [width - document.getElementById('sidebar-wrapper').clientWidth, height]])
+        .scaleExtent([1, 3])
+        .filter(() => {
+          if (d3.event.type !== "dblclick") {
+            return true
+          }
+        })
+        .on("zoom", () => {
           g.attr("transform", d3.event.transform)
         }))(svg);
 
     let nds = [];
     for (let elem of app.nodes_data) {
-      nds.push(new Node(elem.index, elem.info, elem.text, elem.fixed, elem.fx, elem.fy,elem.parent, elem.child, elem.links_data))
+      nds.push(new Node(elem.index, elem.info, elem.text, elem.fixed, elem.fx, elem.fy, elem.parent, elem.child, elem.links_data))
     }
     localStorage.setItem('nodes_data', JSON.stringify(nds));
   }
@@ -369,11 +484,11 @@
       snode.fixed = false;
       let point = d3.mouse(this),
 
-          node_inst = {x: point[0], y: point[1], info: 'node', text: res,child:[], parent: snode.index - 1 },
+          node_inst = {x: point[0], y: point[1], info: 'node', text: res, child: [], parent: snode.index - 1},
           nodeAdd_inst = {x: point[0], y: point[1], info: 'add'},
 
-          node = app.nodes_data.push( node_inst)-1,
-          node_add = app.nodes_data.push(nodeAdd_inst)-1,
+          node = app.nodes_data.push(node_inst) - 1,
+          node_add = app.nodes_data.push(nodeAdd_inst) - 1,
           child_add_link = app.nodes_data[node_add].links_data = {source: node, target: node_add};
 
     }
@@ -386,11 +501,11 @@
     let res = prompt();
     if (res) {
       let point = d3.mouse(this),
-          node_inst = {x: point[0], y: point[1], info: 'node', text: res,child:[], parent: snode.index - 1 },
+          node_inst = {x: point[0], y: point[1], info: 'node', text: res, child: [], parent: snode.index - 1},
           nodeAdd_inst = {x: point[0], y: point[1], info: 'add'},
 
-          node = app.nodes_data.push( node_inst)-1,
-          node_add = app.nodes_data.push(nodeAdd_inst)-1,
+          node = app.nodes_data.push(node_inst) - 1,
+          node_add = app.nodes_data.push(nodeAdd_inst) - 1,
 
           child_add_link = app.nodes_data[node_add].links_data = {source: node, target: node_add},
           child_link = app.nodes_data[node].links_data = {source: snode.index - 1, target: node};
@@ -416,7 +531,7 @@
   }
 
   function dragend(d) {
-    if( d.info ==='node'){
+    if (d.info === 'node') {
       d.fixed = true;
       d.fx = d3.event.x;
       d.fy = d3.event.y;
@@ -428,11 +543,9 @@
     if (!d3.event.active) simulation.alphaTarget(0);
   }
 
-  function releasenode(d,i) {
+  function releasenode(d, i) {
     event.stopImmediatePropagation();
     event.preventDefault();
-    del_node(app.nodes_data[d.index],d.index);
-
 
     if (!d3.event.active) simulation.alphaTarget(0);
     d.fixed = false;
@@ -457,38 +570,27 @@
     document.getElementById("wrapper").classList.remove('toggled');
   }
 
-  function Node(index, info, text, fixed, x,y,parent, child, link ) {
+  function Node(index, info, text, fixed, x, y, parent, child, link) {
 
     this.index = index;
     this.info = info;
     this.text = text;
     this.fixed = fixed;
-    this.fx=x;
-    this.fy=y;
-    this.parent=parent;
-    this.child=child;
-    if(link){
+    this.fx = x;
+    this.fy = y;
+    this.parent = parent;
+    this.child = child;
+    if (link) {
       this.links_data = new Link(link)
     }
 
   }
 
   function Link(link) {
-    if (link){
-    this.index= link.index;
-    this.source= link.source.index;
-    this.target= link.target.index;}
-  }
-
-
-
-  function del_node(d, i) {
-    if (d.child.length>0){console.log("DEl child first")}
-    else {
-      let par_index = app.nodes_data[d.parent].child.findIndex(elem=>{return elem === d.index});
-      app.nodes_data[d.parent].child.splice(par_index,1);
-      app.nodes_data.splice(d.index, 2);
-      restart();
+    if (link) {
+      this.index = link.index;
+      this.source = link.source.index;
+      this.target = link.target.index;
     }
   }
 
