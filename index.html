@@ -202,11 +202,8 @@
     },
   });
 
-  localStorage.removeItem('nodes_data');
-  localStorage.removeItem('links_data');
+  // localStorage.removeItem('nodes_data');
   app.nodes_data = JSON.parse(localStorage.getItem('nodes_data'))||[{'info': 'prim_add'}];
-  // let links_data = JSON.parse(localStorage.getItem('links_data'))||[];
-
   let radius = 24;
   let sm_radius = 12;
   let width = document.documentElement.clientWidth;
@@ -332,7 +329,7 @@
         .on("dblclick", prim_mcd);
 
 
-    link = link.data(app.links_data, function (d) { return d.source+'-'+d.target;});
+    link = link.data(app.links_data, function (d) {return d.source+'-'+d.target;});
     link.exit().remove();
     link = link.enter().append("line").attr("stroke-width", 2).style("marker-end",d=>{if (d.target.info==='node'){return "url(#suit)"}}).merge(link);
     simulation.nodes(app.nodes_data);
@@ -358,17 +355,11 @@
           g.attr("transform", d3.event.transform)
         }))(svg);
 
-    // let nds = [];
-    // for (let elem of app.nodes_data){
-    //   nds.push(new Node(elem.index,elem.info,elem.text,elem.fixed,elem.fx,elem.fy))
-    // }
-    // let lds = [];
-    // for (let lnk of links_data){
-    //   lds.push(new Link(lnk.index,lnk.source,lnk.target))
-    // }
-    // localStorage.setItem('nodes_data', JSON.stringify(nds));
-    // localStorage.setItem('links_data', JSON.stringify(lds));
-
+    let nds = [];
+    for (let elem of app.nodes_data) {
+      nds.push(new Node(elem.index, elem.info, elem.text, elem.fixed, elem.fx, elem.fy,elem.parent, elem.child, elem.links_data))
+    }
+    localStorage.setItem('nodes_data', JSON.stringify(nds));
   }
 
   function prim_mcd(snode) {
@@ -383,7 +374,7 @@
 
           node = app.nodes_data.push( node_inst)-1,
           node_add = app.nodes_data.push(nodeAdd_inst)-1,
-          child_add_link = app.nodes_data[node_add].links_data = {"source": node, "target": node_add};
+          child_add_link = app.nodes_data[node_add].links_data = {source: node, target: node_add};
 
     }
     event.stopPropagation();
@@ -401,11 +392,11 @@
           node = app.nodes_data.push( node_inst)-1,
           node_add = app.nodes_data.push(nodeAdd_inst)-1,
 
-          child_add_link = app.nodes_data[node_add].links_data = {"source": node, "target": node_add},
-          child_link = app.nodes_data[node].links_data = {"source": snode.index - 1, "target": node};
+          child_add_link = app.nodes_data[node_add].links_data = {source: node, target: node_add},
+          child_link = app.nodes_data[node].links_data = {source: snode.index - 1, target: node};
 
 
-      app.nodes_data[snode.index - 1].child.push(node_inst);
+      app.nodes_data[snode.index - 1].child.push(node);
     }
     event.stopPropagation();
     restart();
@@ -450,7 +441,6 @@
   }
 
   function context_menu_toggle(d) {
-    console.log("ELEM ", d);
     event.stopImmediatePropagation();
     event.preventDefault();
 
@@ -467,29 +457,35 @@
     document.getElementById("wrapper").classList.remove('toggled');
   }
 
-  function Node(index, info, text, fixed, x,y, child) {
+  function Node(index, info, text, fixed, x,y,parent, child, link ) {
+
     this.index = index;
     this.info = info;
     this.text = text;
     this.fixed = fixed;
     this.fx=x;
     this.fy=y;
+    this.parent=parent;
     this.child=child;
-    this.vx=null;
-    this.vy=null;
+    if(link){
+      this.links_data = new Link(link)
+    }
+
   }
 
-  function Link(index, source, target) {
-    this.index=index;
-    this.source= source.index;
-    this.target= target.index;
+  function Link(link) {
+    if (link){
+    this.index= link.index;
+    this.source= link.source.index;
+    this.target= link.target.index;}
   }
+
+
 
   function del_node(d, i) {
-    console.log(d);
     if (d.child.length>0){console.log("DEl child first")}
     else {
-      let par_index = app.nodes_data[d.parent].child.findIndex(elem=>{return elem.index === d.index});
+      let par_index = app.nodes_data[d.parent].child.findIndex(elem=>{return elem === d.index});
       app.nodes_data[d.parent].child.splice(par_index,1);
       app.nodes_data.splice(d.index, 2);
       restart();
