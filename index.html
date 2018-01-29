@@ -114,7 +114,6 @@
   <style>
     * {
       box-sizing: content-box;
-
       margin: 0;
       padding: 0;
     }
@@ -131,6 +130,12 @@
     .node text {
       pointer-events: none;
       font: 32px sans-serif;
+    }
+
+    .flx{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
     }
 
   </style>
@@ -163,7 +168,7 @@
 <body>
 
 <div id="wrapper">
-  <div id="sidebar-wrapper">
+  <div id="sidebar-wrapper" class="flx">
     <ul class="sidebar-nav">
       <li class="sidebar-brand" v-if="show_prim" @click="show_prim=!show_prim" >
         {{sel_node.text}}
@@ -182,6 +187,11 @@
       </li>
       <li>
         <el-button type="danger"  @click="del_node(sel_node)">Delete</el-button>
+      </li>
+    </ul>
+    <ul class="sidebar-nav">
+      <li>
+        <el-button type="danger"  @click="del_all">Delete All</el-button>
       </li>
     </ul>
   </div>
@@ -241,6 +251,9 @@
       },
     },
     methods: {
+      del_all:function () {
+        this.nodes_data = [{'info': 'prim_add'}];
+      },
       del_node: function (d) {
         if (d.child.length > 0) {
           console.log("DEl child first")
